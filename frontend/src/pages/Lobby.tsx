@@ -5,7 +5,7 @@ import { Room } from '../types'
 import { GameBoard } from '../components/GameBoard'
 import '../App.css'
 
-const BACKEND_URL = 'http://localhost:3001'
+const BACKEND_URL = 'https://ksg8k4s4okckoggw00ws0k0g.5.78.40.109.sslip.io'
 
 type AppState = 'disconnected' | 'lobby' | 'waiting' | 'playing'
 
