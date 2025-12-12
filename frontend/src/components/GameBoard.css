@@ -1,0 +1,460 @@
+.game-board {
+  width: 100%;
+  max-width: 1850px;
+  height: 100vh;
+  position: relative;
+  background: #1a1a2e;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+}
+
+/* Header fixo no topo */
+.game-header {
+  position: sticky;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  padding: 0.75rem 2rem;
+  border-radius: 25px;
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  z-index: 100;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  margin: 1rem auto;
+  width: fit-content;
+}
+
+.round-info, .trick-info {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+/* Mesa de jogo - quadrada com bordas arredondadas */
+.game-table {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1000px;
+  height: 520px;
+  background: radial-gradient(circle at center, #1e7a3e 0%, #0d5c2a 100%);
+  border-radius: 30px;
+  border: 15px solid #8b4513;
+  box-shadow: 
+    inset 0 0 50px rgba(0, 0, 0, 0.5),
+    0 10px 50px rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Centro da mesa - onde ficam as cartas jogadas */
+.game-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  z-index: 10;
+}
+
+.manilha-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 15px;
+  border-radius: 15px;
+  backdrop-filter: blur(5px);
+}
+
+.manilha-label {
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.played-cards {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.played-card-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: cardDrop 0.3s ease-out;
+}
+
+@keyframes cardDrop {
+  from {
+    transform: translateY(-50px) scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.played-by {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 4px 12px;
+  border-radius: 10px;
+}
+
+/* Sidebar com jogadores - FORA DA MESA */
+.players-sidebar {
+  position: absolute;
+  left: 20px;
+  top: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 50;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+/* Scrollbar customizada para sidebar */
+.players-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.players-sidebar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+}
+
+.players-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 215, 0, 0.4);
+  border-radius: 10px;
+}
+
+.players-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 215, 0, 0.6);
+}
+
+/* Área de ação (previsões, etc) - Flutuante sobre a mesa */
+.action-area {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(26, 26, 46, 0.95);
+  border-radius: 20px;
+  padding: 20px 30px;
+  min-width: 350px;
+  max-width: 550px;
+  border: 2px solid rgba(255, 215, 0, 0.5);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  z-index: 150;
+}
+
+.prediction-panel, .waiting-panel, .scoring-panel, .finished-panel {
+  text-align: center;
+}
+
+.prediction-panel h3, .finished-panel h2 {
+  color: #667eea;
+  margin-bottom: 10px;
+}
+
+.predictions-sum {
+  font-size: 1.1rem;
+  color: #666;
+  margin: 10px 0;
+}
+
+.prediction-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.prediction-buttons button {
+  width: 60px;
+  height: 60px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  border: 2px solid #667eea;
+  background: white;
+  color: #667eea;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.prediction-buttons button:hover:not(:disabled) {
+  background: #667eea;
+  color: white;
+  transform: scale(1.1);
+}
+
+.prediction-buttons button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  border-color: #ccc;
+  color: #ccc;
+}
+
+.prediction-buttons button.invalid {
+  background: #ffebee;
+  border-color: #f44336;
+  color: #f44336;
+}
+
+/* Footer com as cartas do jogador - FORA DA MESA */
+.cards-footer {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.85);
+  padding: 20px 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 20px;
+  border: 2px solid rgba(255, 215, 0, 0.4);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  z-index: 100;
+}
+
+.cards-hand {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  perspective: 1000px;
+}
+
+.cards-hand .card,
+.cards-hand .card-back {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.cards-hand .card.playable:hover,
+.cards-hand > div:hover .card-back {
+  transform: translateY(-20px) scale(1.1);
+  z-index: 100;
+  box-shadow: 0 10px 30px rgba(255, 215, 0, 0.5);
+}
+
+.cards-hand .card:not(.playable) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cards-hand .card:not(.playable):hover {
+  transform: none;
+}
+
+.waiting-panel, .scoring-panel {
+  padding: 30px;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.finished-panel {
+  padding: 40px;
+}
+
+.finished-panel h2 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+}
+
+.finished-panel h3 {
+  font-size: 1.8rem;
+  color: #4caf50;
+}
+
+@media (max-width: 768px) {
+  .game-board {
+    padding: 10px;
+  }
+
+  .players-area {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  .cards-hand {
+    gap: 10px;
+  }
+
+  .prediction-buttons button {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+  }
+}
+
+
+.prediction-panel, .waiting-panel, .scoring-panel, .finished-panel {
+  text-align: center;
+  color: #fff;
+}
+
+.prediction-panel h3, .finished-panel h2 {
+  color: #ffd700;
+  margin-bottom: 15px;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.prediction-panel p {
+  color: #ddd;
+  margin: 10px 0;
+}
+
+.predictions-sum {
+  font-size: 1.1rem;
+  color: #ffd700;
+  margin: 15px 0;
+  font-weight: bold;
+}
+
+.preview-cards {
+  margin: 15px 0;
+}
+
+.preview-cards .cards-hand {
+  gap: 10px;
+}
+
+.prediction-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.prediction-buttons button {
+  width: 60px;
+  height: 60px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  border: 2px solid #ffd700;
+  background: rgba(255, 215, 0, 0.1);
+  color: #ffd700;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prediction-buttons button:hover:not(:disabled) {
+  background: #ffd700;
+  color: #000;
+  transform: scale(1.15);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+}
+
+.prediction-buttons button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  border-color: #666;
+  color: #666;
+  background: rgba(100, 100, 100, 0.1);
+}
+
+.prediction-buttons button.invalid {
+  background: rgba(244, 67, 54, 0.2);
+  border-color: #f44336;
+  color: #f44336;
+}
+
+.waiting-panel, .scoring-panel {
+  padding: 30px;
+  font-size: 1.1rem;
+  color: #ddd;
+}
+
+.waiting-panel strong {
+  color: #ffd700;
+}
+
+.finished-panel {
+  padding: 40px;
+}
+
+.finished-panel h2 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  color: #ffd700;
+}
+
+.finished-panel h3 {
+  font-size: 1.8rem;
+  color: #4caf50;
+}
+
+@media (max-width: 768px) {
+  .game-table {
+    width: 95vw;
+    height: 85vh;
+  }
+
+  .action-area {
+    min-width: 90vw;
+    bottom: 150px;
+  }
+
+  .my-cards {
+    bottom: 10px;
+  }
+
+  .cards-hand {
+    gap: -20px;
+  }
+
+  .player-info {
+    min-width: 140px;
+    padding: 10px;
+  }
+}
+
+
+.restart-btn {
+  margin-top: 25px;
+  padding: 15px 40px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+  border: none;
+  border-radius: 15px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.restart-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(76, 175, 80, 0.6);
+}

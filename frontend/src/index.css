@@ -1,0 +1,42 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  /* Prevenir zoom no mobile */
+  touch-action: manipulation;
+  -ms-touch-action: manipulation;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+body {
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #1a1a2e;
+  min-height: 100vh;
+  overflow-x: hidden;
+  /* Prevenir zoom */
+  touch-action: pan-x pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+  /* Zoom fixo em 80% */
+  zoom: 80%;
+  -moz-transform: scale(0.8);
+  -moz-transform-origin: 0 0;
+}
+
+#root {
+  width: 100%;
+  max-width: 1850px;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin: 0 auto;
+}

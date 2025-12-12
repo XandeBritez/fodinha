@@ -1,0 +1,96 @@
+.card {
+  background: white;
+  border: 2px solid #333;
+  border-radius: 8px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.card.small {
+  width: 50px;
+  height: 70px;
+  font-size: 0.7rem;
+}
+
+.card.medium {
+  width: 80px;
+  height: 112px;
+  font-size: 1rem;
+}
+
+.card.large {
+  width: 100px;
+  height: 140px;
+  font-size: 1.2rem;
+}
+
+.card.playable {
+  cursor: pointer;
+}
+
+.card.playable:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.card.manilha {
+  border-width: 3px;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+  animation: glow 1.5s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+  }
+}
+
+.card-corner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-weight: bold;
+}
+
+.card-corner.top-left {
+  top: 5px;
+  left: 5px;
+}
+
+.card-corner.bottom-right {
+  bottom: 5px;
+  right: 5px;
+  transform: rotate(180deg);
+}
+
+.card-value {
+  font-size: 1.2em;
+  line-height: 1;
+}
+
+.card-suit {
+  font-size: 1em;
+  line-height: 1;
+}
+
+.card-center {
+  font-size: 3em;
+  opacity: 0.3;
+}
+
+.card.small .card-center {
+  font-size: 2em;
+}
+
+.card.large .card-center {
+  font-size: 4em;
+}

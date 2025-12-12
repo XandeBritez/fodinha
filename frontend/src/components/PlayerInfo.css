@@ -1,0 +1,69 @@
+.player-info {
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 12px;
+  padding: 12px 15px;
+  min-width: 160px;
+  max-width: 200px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.player-info.current-turn {
+  border-color: #4caf50;
+  border-width: 3px;
+}
+
+.player-info.current-turn::before {
+  content: '▶';
+  position: absolute;
+  left: -25px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.5rem;
+  color: #4caf50;
+}
+
+.player-info.you {
+  background: rgba(33, 150, 243, 0.3);
+  border-color: #2196f3;
+  border-width: 3px;
+}
+
+.player-info.eliminated {
+  opacity: 0.4;
+  filter: grayscale(100%);
+}
+
+.player-name {
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.player-lives {
+  font-size: 1.2rem;
+  margin: 5px 0;
+  min-height: 25px;
+}
+
+.player-prediction {
+  font-size: 0.85rem;
+  color: #ffd700;
+  margin: 5px 0;
+  padding: 5px;
+  background: rgba(255, 215, 0, 0.1);
+  border-radius: 5px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.player-cards-count {
+  font-size: 0.85rem;
+  color: #aaa;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+

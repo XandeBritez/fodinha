@@ -1,0 +1,94 @@
+.game-log {
+  position: absolute;
+  right: 20px;
+  top: 120px;
+  width: 280px;
+  height: calc(100vh - 280px);
+  max-height: 520px;
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.game-log-header {
+  background: rgba(255, 215, 0, 0.2);
+  padding: 12px;
+  font-weight: bold;
+  color: #ffd700;
+  text-align: center;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+  font-size: 0.9rem;
+}
+
+.game-log-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.game-log-empty {
+  color: #666;
+  text-align: center;
+  padding: 20px;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.game-log-message {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #ddd;
+  line-height: 1.4;
+  border-left: 3px solid rgba(255, 215, 0, 0.5);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Scrollbar customizada */
+.game-log-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.game-log-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.game-log-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 215, 0, 0.3);
+  border-radius: 10px;
+}
+
+.game-log-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 215, 0, 0.5);
+}
+
+@media (max-width: 1200px) {
+  .game-log {
+    width: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .game-log {
+    display: none;
+  }
+}
