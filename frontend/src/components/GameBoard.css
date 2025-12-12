@@ -1,13 +1,15 @@
 .game-board {
   width: 100%;
   max-width: 1850px;
-  height: 100vh;
+  min-height: 100vh;
   position: relative;
   background: #1a1a2e;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   margin: 0 auto;
+  padding-bottom: 150px;
 }
 
 /* Header fixo no topo */
@@ -38,7 +40,7 @@
 /* Mesa de jogo - quadrada com bordas arredondadas */
 .game-table {
   position: absolute;
-  top: 50%;
+  top: 45%;
   left: 50%;
   transform: translate(-50%, -50%);
   width: 1000px;
@@ -230,18 +232,18 @@
 /* Footer com as cartas do jogador - FORA DA MESA */
 .cards-footer {
   position: fixed;
-  bottom: 20px;
+  bottom: 30px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.85);
-  padding: 20px 40px;
+  background: rgba(0, 0, 0, 0.9);
+  padding: 15px 30px;
   display: flex;
   justify-content: center;
   align-items: center;
-  border-radius: 20px;
+  border-radius: 15px;
   border: 2px solid rgba(255, 215, 0, 0.4);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-  z-index: 100;
+  box-shadow: 0 5px 30px rgba(0, 0, 0, 0.6);
+  z-index: 200;
 }
 
 .cards-hand {

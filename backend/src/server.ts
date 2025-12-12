@@ -46,7 +46,7 @@ io.on('connection', (socket: Socket) => {
   // Criar sala
   socket.on('create-room', (data: { playerName: string; maxPlayers?: number }) => {
     try {
-      const roomId = roomManager.createRoom(socket.id, data.playerName, data.maxPlayers || 4);
+      const roomId = roomManager.createRoom(socket.id, data.playerName, data.maxPlayers || 10);
       socket.join(roomId);
       socketToRoom.set(socket.id, roomId);
 

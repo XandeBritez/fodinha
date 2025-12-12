@@ -6,7 +6,7 @@ export class RoomManager {
   private gameManagers: Map<string, GameManager> = new Map();
 
   // Criar sala
-  createRoom(hostId: string, hostName: string, maxPlayers: number = 4): string {
+  createRoom(hostId: string, hostName: string, maxPlayers: number = 10): string {
     const roomId = this.generateRoomId();
 
     const host: Player = {

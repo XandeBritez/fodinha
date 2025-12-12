@@ -85,7 +85,7 @@ export function Lobby() {
     
     socket.emit('create-room', { 
       playerName: playerName.trim(), 
-      maxPlayers: 4 
+      maxPlayers: 10 
     })
   }
 
