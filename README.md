@@ -157,13 +157,6 @@ Ser o último jogador com vidas restantes. Cada jogador começa com 10 vidas.
 3. **Pontuação**: Diferença entre previsão e resultado = vidas perdidas
 4. **Eliminação**: Jogador com 0 vidas é eliminado
 
-## 🚀 Deploy
-
-O projeto está pronto para deploy em produção. Consulte os guias:
-- `DEPLOY.md` - Guia completo de deploy
-- `DEPLOY-HOSTINGER-COOLIFY.md` - Deploy na Hostinger com Coolify
-- `DEPLOY-HOSTINGER-RAILWAY.md` - Deploy na Hostinger com Railway
-
 ### Opções de Deploy
 - **Frontend**: Vercel, Netlify, Cloudflare Pages (grátis)
 - **Backend**: Railway, Render, Fly.io ($5-7/mês)
