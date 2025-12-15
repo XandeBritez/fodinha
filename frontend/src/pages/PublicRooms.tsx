@@ -46,15 +46,7 @@ export function PublicRooms() {
   return (
     <div className="app">
       <div className="lobby-container">
-        <div className="lobby-header">
-          <h1>🎮 Salas Públicas</h1>
-          <button 
-            onClick={() => navigate('/')}
-            className="btn-secondary"
-          >
-            ← Voltar
-          </button>
-        </div>
+        <h1>🎮 Salas Públicas</h1>
 
         {error && (
           <div className="error-message">
@@ -97,6 +89,13 @@ export function PublicRooms() {
             ))}
           </div>
         )}
+
+        <button 
+          onClick={() => navigate('/')}
+          className="back-btn-full"
+        >
+          ← Voltar
+        </button>
       </div>
     </div>
   )

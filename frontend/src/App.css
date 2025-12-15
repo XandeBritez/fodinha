@@ -182,32 +182,51 @@ button:disabled {
     flex-direction: column;
     gap: 10px;
   }
+
+  /* Botões em coluna no mobile */
+  .button-row {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .back-btn, .action-btn {
+    width: 100%;
+    padding: 18px 30px;
+    font-size: 1.1rem;
+  }
+
+  .lobby-container {
+    padding: 30px 20px;
+    width: 100%;
+  }
+
+  .menu-btn, .rules-link {
+    padding: 20px 30px;
+    font-size: 1.2rem;
+  }
 }
 
 
 /* Página de regras - TELA COMPLETA */
 .rules-page {
-  width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
   background: #1a1a2e;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 20px;
-  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 /* Container de regras */
 .rules-container {
   background: white;
   border-radius: 20px;
-  padding: 40px 30px 40px 40px;
+  padding: 40px;
   max-width: 900px;
   width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
+  margin: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  position: relative;
 }
 
 .back-button {
@@ -567,4 +586,25 @@ button:disabled {
 
 .lobby-header h1 {
   margin: 0;
+}
+
+
+/* Botão voltar largura total */
+.back-btn-full {
+  width: 100%;
+  padding: 18px 30px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 20px;
+}
+
+.back-btn-full:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(102, 126, 234, 0.5);
 }

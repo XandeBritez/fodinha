@@ -104,14 +104,21 @@ export class Deck {
     if (isCard1Manilha) return 1;
     if (isCard2Manilha) return -1;
 
-    // Comparar cartas normais
+    // Comparar cartas normais por valor
     const strength1 = CARD_STRENGTH[card1.value];
     const strength2 = CARD_STRENGTH[card2.value];
 
     if (strength1 > strength2) return 1;
     if (strength1 < strength2) return -1;
 
-    // Empate: primeira carta jogada vence
+    // Mesmo valor: compara por naipe (paus > copas > espadas > ouros)
+    const suit1Strength = SUIT_STRENGTH[card1.suit];
+    const suit2Strength = SUIT_STRENGTH[card2.suit];
+    
+    if (suit1Strength > suit2Strength) return 1;
+    if (suit1Strength < suit2Strength) return -1;
+
+    // Empate total (mesma carta): primeira carta jogada vence
     return firstPlayedWins ? 1 : -1;
   }
 

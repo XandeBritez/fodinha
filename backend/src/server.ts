@@ -30,6 +30,149 @@ const roomManager = new RoomManager();
 // Mapa de socket.id para roomId
 const socketToRoom = new Map<string, string>();
 
+// Timers de turno por sala
+const turnTimers = new Map<string, NodeJS.Timeout>();
+const TURN_TIME_LIMIT = 45000; // 45 segundos
+
+// Função para iniciar timer de turno
+function startTurnTimer(roomId: string) {
+  // Limpar timer anterior se existir
+  clearTurnTimer(roomId);
+
+  const room = roomManager.getRoom(roomId);
+  if (!room || !room.gameState || room.gameState.phase !== 'playing') return;
+
+  const activePlayers = room.players.filter(p => !p.isEliminated);
+  const currentPlayer = activePlayers[room.gameState.currentPlayerIndex];
+  if (!currentPlayer) return;
+
+  // Enviar evento de início do timer
+  io.to(roomId).emit('turn-timer-start', { 
+    playerId: currentPlayer.id,
+    timeLimit: TURN_TIME_LIMIT 
+  });
+
+  // Criar timer
+  const timer = setTimeout(() => {
+    const currentRoom = roomManager.getRoom(roomId);
+    if (!currentRoom || !currentRoom.gameState || currentRoom.gameState.phase !== 'playing') return;
+
+    const currentActivePlayers = currentRoom.players.filter(p => !p.isEliminated);
+    const playerToPlay = currentActivePlayers[currentRoom.gameState.currentPlayerIndex];
+    
+    if (!playerToPlay || playerToPlay.cards.length === 0) return;
+
+    // Escolher carta aleatória
+    const randomIndex = Math.floor(Math.random() * playerToPlay.cards.length);
+    const randomCard = playerToPlay.cards[randomIndex];
+
+    console.log(`⏰ Tempo esgotado! ${playerToPlay.name} jogou carta aleatória: ${randomCard.value}${getSuitSymbol(randomCard.suit)}`);
+
+    // Enviar evento de timeout
+    io.to(roomId).emit('game-event', { 
+      type: 'timeout', 
+      message: `⏰ Tempo esgotado! ${playerToPlay.name} jogou carta aleatória` 
+    });
+
+    // Jogar a carta
+    try {
+      const livesBefore: Record<string, number> = {};
+      currentRoom.players.forEach(p => {
+        livesBefore[p.id] = p.lives;
+      });
+
+      roomManager.playCard(roomId, playerToPlay.id, randomCard.id);
+
+      io.to(roomId).emit('game-event', { 
+        type: 'card-played', 
+        message: `🃏 ${playerToPlay.name} jogou ${randomCard.value}${getSuitSymbol(randomCard.suit)}` 
+      });
+
+      const updatedRoom = roomManager.getRoom(roomId);
+      
+      if (updatedRoom?.gameState?.phase === 'trick-complete') {
+        const winner = updatedRoom.players.find(p => p.id === updatedRoom.gameState?.currentTrickWinner);
+        if (winner) {
+          io.to(roomId).emit('game-event', { 
+            type: 'trick-winner', 
+            message: `🏆 ${winner.name} ganhou a trick!` 
+          });
+        }
+
+        io.to(roomId).emit('game-updated', updatedRoom);
+
+        setTimeout(() => {
+          roomManager.continueTrick(roomId);
+          const nextRoom = roomManager.getRoom(roomId);
+          if (nextRoom) {
+            io.to(roomId).emit('game-updated', nextRoom);
+            // Iniciar timer para próximo turno
+            if (nextRoom.gameState?.phase === 'playing') {
+              startTurnTimer(roomId);
+            }
+          }
+        }, 3000);
+        
+        return;
+      }
+
+      if (updatedRoom?.gameState?.phase === 'prediction' || updatedRoom?.gameState?.phase === 'scoring') {
+        updatedRoom.players.forEach(p => {
+          const livesLost = (livesBefore[p.id] || 0) - p.lives;
+          if (livesLost > 0) {
+            io.to(roomId).emit('game-event', { 
+              type: 'lives-lost', 
+              message: `💔 ${p.name} perdeu ${livesLost} vida${livesLost > 1 ? 's' : ''} (${p.lives} restante${p.lives !== 1 ? 's' : ''})` 
+            });
+          } else if (livesLost === 0 && livesBefore[p.id] !== undefined) {
+            io.to(roomId).emit('game-event', { 
+              type: 'prediction-correct', 
+              message: `✅ ${p.name} acertou a previsão!` 
+            });
+          }
+          
+          if (p.isEliminated && livesBefore[p.id] > 0) {
+            io.to(roomId).emit('game-event', { 
+              type: 'eliminated', 
+              message: `☠️ ${p.name} foi eliminado!` 
+            });
+          }
+        });
+      }
+
+      io.to(roomId).emit('game-updated', updatedRoom);
+
+      // Iniciar timer para próximo turno
+      if (updatedRoom?.gameState?.phase === 'playing') {
+        startTurnTimer(roomId);
+      }
+    } catch (error: any) {
+      console.error('Erro ao jogar carta automática:', error.message);
+    }
+  }, TURN_TIME_LIMIT);
+
+  turnTimers.set(roomId, timer);
+}
+
+// Função para limpar timer
+function clearTurnTimer(roomId: string) {
+  const timer = turnTimers.get(roomId);
+  if (timer) {
+    clearTimeout(timer);
+    turnTimers.delete(roomId);
+  }
+}
+
+function getSuitSymbol(suit: string): string {
+  const symbols: Record<string, string> = {
+    'ouros': '♦',
+    'espadas': '♠',
+    'copas': '♥',
+    'paus': '♣'
+  };
+  return symbols[suit] || '';
+}
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ 
@@ -130,6 +273,11 @@ io.on('connection', (socket: Socket) => {
 
       const updatedRoom = roomManager.getRoom(roomId);
       io.to(roomId).emit('game-updated', updatedRoom);
+
+      // Se entrou na fase de jogo, iniciar timer
+      if (updatedRoom?.gameState?.phase === 'playing') {
+        startTurnTimer(roomId);
+      }
     } catch (error: any) {
       socket.emit('error', { message: error.message });
     }
@@ -170,6 +318,9 @@ io.on('connection', (socket: Socket) => {
     try {
       const roomId = socketToRoom.get(socket.id);
       if (!roomId) throw new Error('Você não está em uma sala');
+
+      // Limpar timer quando jogador joga
+      clearTurnTimer(roomId);
 
       const room = roomManager.getRoom(roomId);
       const player = room?.players.find(p => p.id === socket.id);
@@ -215,6 +366,10 @@ io.on('connection', (socket: Socket) => {
           const nextRoom = roomManager.getRoom(roomId);
           if (nextRoom) {
             io.to(roomId).emit('game-updated', nextRoom);
+            // Iniciar timer para próximo turno
+            if (nextRoom.gameState?.phase === 'playing') {
+              startTurnTimer(roomId);
+            }
           }
         }, 3000);
         
@@ -247,20 +402,15 @@ io.on('connection', (socket: Socket) => {
       }
 
       io.to(roomId).emit('game-updated', updatedRoom);
+
+      // Iniciar timer para próximo turno
+      if (updatedRoom?.gameState?.phase === 'playing') {
+        startTurnTimer(roomId);
+      }
     } catch (error: any) {
       socket.emit('error', { message: error.message });
     }
   });
-
-  function getSuitSymbol(suit: string): string {
-    const symbols: Record<string, string> = {
-      'ouros': '♦',
-      'espadas': '♠',
-      'copas': '♥',
-      'paus': '♣'
-    };
-    return symbols[suit] || '';
-  }
 
   // Desconectar
   socket.on('disconnect', () => {
@@ -272,6 +422,9 @@ io.on('connection', (socket: Socket) => {
       const room = roomManager.getRoom(roomId);
       if (room) {
         io.to(roomId).emit('room-updated', room);
+      } else {
+        // Sala foi deletada, limpar timer
+        clearTurnTimer(roomId);
       }
     }
     console.log('❌ Cliente desconectado:', socket.id);

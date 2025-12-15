@@ -9,6 +9,11 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001'
 
 type AppState = 'disconnected' | 'lobby' | 'waiting' | 'playing'
 
+interface TurnTimerData {
+  playerId: string;
+  timeLimit: number;
+}
+
 export function Lobby() {
   const navigate = useNavigate()
   const [socket, setSocket] = useState<Socket | null>(null)
@@ -20,6 +25,7 @@ export function Lobby() {
   const [lobbyMode, setLobbyMode] = useState<'menu' | 'create' | 'join'>('menu')
   const [showToast, setShowToast] = useState(false)
   const [isPrivate, setIsPrivate] = useState(false)
+  const [turnTimerStart, setTurnTimerStart] = useState<TurnTimerData | null>(null)
 
   // Conectar ao servidor automaticamente
   useEffect(() => {
@@ -69,11 +75,20 @@ export function Lobby() {
     newSocket.on('game-updated', (updatedRoom: Room) => {
       console.log('🔄 Jogo atualizado')
       setRoom(updatedRoom)
+      // Resetar timer quando não está na fase de jogo
+      if (updatedRoom.gameState?.phase !== 'playing') {
+        setTurnTimerStart(null)
+      }
     })
 
     newSocket.on('game-event', (event: { type: string; message: string }) => {
       console.log('📋 Evento:', event.message)
       window.dispatchEvent(new CustomEvent('game-log-event', { detail: event.message }))
+    })
+
+    newSocket.on('turn-timer-start', (data: TurnTimerData) => {
+      console.log('⏱️ Timer iniciado para:', data.playerId)
+      setTurnTimerStart({ ...data })
     })
 
     newSocket.on('error', (data: { message: string }) => {
@@ -306,6 +321,7 @@ export function Lobby() {
         onPlayCard={playCard}
         onMakePrediction={makePrediction}
         onRestartGame={restartGame}
+        turnTimerStart={turnTimerStart}
       />
     )
   }

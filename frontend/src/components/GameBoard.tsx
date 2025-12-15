@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Room, Card as CardType } from '../types';
 import { Card } from './Card';
 import { CardBack } from './CardBack';
@@ -6,15 +6,18 @@ import { PlayerInfo } from './PlayerInfo';
 import { GameLog } from './GameLog';
 import './GameBoard.css';
 
+const TURN_TIME_LIMIT = 45000; // 45 segundos
+
 interface GameBoardProps {
   room: Room;
   myPlayerId: string;
   onPlayCard: (cardId: string) => void;
   onMakePrediction: (prediction: number) => void;
   onRestartGame: () => void;
+  turnTimerStart?: { playerId: string; timeLimit: number } | null;
 }
 
-export function GameBoard({ room, myPlayerId, onPlayCard, onMakePrediction, onRestartGame }: GameBoardProps) {
+export function GameBoard({ room, myPlayerId, onPlayCard, onMakePrediction, onRestartGame, turnTimerStart }: GameBoardProps) {
   const { gameState, players } = room;
   const [gameLog, setGameLog] = useState<string[]>([]);
   const [lastRound, setLastRound] = useState(0);
@@ -22,6 +25,60 @@ export function GameBoard({ room, myPlayerId, onPlayCard, onMakePrediction, onRe
   const [trickWinnerName, setTrickWinnerName] = useState<string | null>(null);
   const [showPlayersSheet, setShowPlayersSheet] = useState(false);
   const [showHistorySheet, setShowHistorySheet] = useState(false);
+  const [turnTimeRemaining, setTurnTimeRemaining] = useState<number>(TURN_TIME_LIMIT);
+  const [showTurnTimer, setShowTurnTimer] = useState(false);
+  const timerIntervalRef = useRef<number | null>(null);
+  const timerStartRef = useRef<number>(0);
+
+  // Timer de turno
+  useEffect(() => {
+    if (turnTimerStart && gameState?.phase === 'playing') {
+      // Iniciar timer
+      timerStartRef.current = Date.now();
+      setTurnTimeRemaining(turnTimerStart.timeLimit);
+      setShowTurnTimer(true);
+
+      // Limpar intervalo anterior
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+
+      // Atualizar a cada 100ms para animação suave
+      timerIntervalRef.current = setInterval(() => {
+        const elapsed = Date.now() - timerStartRef.current;
+        const remaining = Math.max(0, turnTimerStart.timeLimit - elapsed);
+        setTurnTimeRemaining(remaining);
+
+        if (remaining <= 0) {
+          if (timerIntervalRef.current) {
+            clearInterval(timerIntervalRef.current);
+          }
+        }
+      }, 100);
+
+      return () => {
+        if (timerIntervalRef.current) {
+          clearInterval(timerIntervalRef.current);
+        }
+      };
+    } else {
+      // Esconder timer quando não está na fase de jogo
+      setShowTurnTimer(false);
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+    }
+  }, [turnTimerStart, gameState?.phase]);
+
+  // Esconder timer quando não é fase de jogo
+  useEffect(() => {
+    if (gameState?.phase !== 'playing') {
+      setShowTurnTimer(false);
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+    }
+  }, [gameState?.phase]);
 
   // Escutar eventos do servidor via window event
   useEffect(() => {
@@ -149,14 +206,34 @@ export function GameBoard({ room, myPlayerId, onPlayCard, onMakePrediction, onRe
 
       {/* Header */}
       <div className="game-header">
-        <div className="round-info">
-          Rodada {gameState.currentRound} | {gameState.cardsPerPlayer} carta(s)
-        </div>
-        {gameState.phase === 'playing' && (
-          <div className="trick-info">
-            Trick {gameState.trickNumber}/{gameState.cardsPerPlayer}
+        {/* Toggle Esquerdo - Mobile Only */}
+        <button 
+          className="mobile-toggle-header mobile-toggle-left"
+          onClick={() => setShowPlayersSheet(true)}
+          aria-label="Ver jogadores"
+        >
+          👥
+        </button>
+
+        <div className="header-content">
+          <div className="round-info">
+            Rodada {gameState.currentRound} | {gameState.cardsPerPlayer} carta(s)
           </div>
-        )}
+          {gameState.phase === 'playing' && (
+            <div className="trick-info">
+              Trick {gameState.trickNumber}/{gameState.cardsPerPlayer}
+            </div>
+          )}
+        </div>
+
+        {/* Toggle Direito - Mobile Only */}
+        <button 
+          className="mobile-toggle-header mobile-toggle-right"
+          onClick={() => setShowHistorySheet(true)}
+          aria-label="Ver histórico"
+        >
+          📋
+        </button>
       </div>
 
       {/* Mesa de jogo */}
@@ -306,21 +383,7 @@ export function GameBoard({ room, myPlayerId, onPlayCard, onMakePrediction, onRe
         </div>
       )}
 
-      {/* Toggle Buttons - Mobile Only */}
-      <button 
-        className="mobile-toggle mobile-toggle-left"
-        onClick={() => setShowPlayersSheet(true)}
-        aria-label="Ver jogadores"
-      >
-        👥
-      </button>
-      <button 
-        className="mobile-toggle mobile-toggle-right"
-        onClick={() => setShowHistorySheet(true)}
-        aria-label="Ver histórico"
-      >
-        📋
-      </button>
+
 
       {/* Players Sheet - Mobile */}
       {showPlayersSheet && (
@@ -379,6 +442,25 @@ export function GameBoard({ room, myPlayerId, onPlayCard, onMakePrediction, onRe
       {/* Footer com as cartas do jogador - FORA DA MESA */}
       {gameState.phase === 'playing' && me && me.cards.length > 0 && (
         <div className="cards-footer">
+          {/* Barra de Timer */}
+          {showTurnTimer && isMyTurn && (
+            <div className={`turn-timer-container ${turnTimeRemaining <= 10000 ? 'urgent' : ''}`}>
+              <div 
+                className="turn-timer-bar"
+                style={{
+                  width: `${(turnTimeRemaining / TURN_TIME_LIMIT) * 100}%`,
+                  backgroundColor: turnTimeRemaining > 30000 
+                    ? '#4caf50' // Verde (> 30s)
+                    : turnTimeRemaining > 15000 
+                      ? '#ff9800' // Amarelo (15-30s)
+                      : '#f44336' // Vermelho (< 15s)
+                }}
+              />
+              <span className="turn-timer-text">
+                {Math.ceil(turnTimeRemaining / 1000)}s
+              </span>
+            </div>
+          )}
           <div className="cards-hand">
             {me.cards.map((card) => (
               (gameState.cardsPerPlayer === 1 || gameState.cardsPerPlayer === 9) ? (

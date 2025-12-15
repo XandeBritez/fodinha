@@ -7,9 +7,6 @@ export function Rules() {
   return (
     <div className="rules-page">
       <div className="rules-container">
-        <button className="back-button" onClick={() => navigate('/')}>
-          ← Voltar
-        </button>
         <h1>📖 Regras do Fodinha</h1>
         
         <div className="rules-content">
@@ -68,6 +65,10 @@ export function Rules() {
             <p>O último jogador com vidas restantes vence o jogo!</p>
           </section>
         </div>
+
+        <button className="back-btn-full" onClick={() => navigate('/')}>
+          ← Voltar
+        </button>
       </div>
     </div>
   )
