@@ -26,36 +26,76 @@ export function Lobby() {
   const [showToast, setShowToast] = useState(false)
   const [isPrivate, setIsPrivate] = useState(false)
   const [turnTimerStart, setTurnTimerStart] = useState<TurnTimerData | null>(null)
+  const [showReconnectPrompt, setShowReconnectPrompt] = useState(false)
+  const [savedSession, setSavedSession] = useState<{ roomId: string; playerName: string } | null>(null)
 
   // Conectar ao servidor automaticamente
   useEffect(() => {
-    // Verificar se há um roomId na URL
-    const urlParams = new URLSearchParams(window.location.search)
-    const joinRoomId = urlParams.get('join')
-    if (joinRoomId) {
-      setRoomIdInput(joinRoomId)
-      setLobbyMode('join')
+    // Verificar se há sessão salva
+    const savedRoomId = localStorage.getItem('fodinha_roomId')
+    const savedPlayerName = localStorage.getItem('fodinha_playerName')
+    
+    // Limpar URL se houver sessão salva (prioridade para reconexão)
+    if (savedRoomId && savedPlayerName) {
+      setSavedSession({ roomId: savedRoomId, playerName: savedPlayerName })
+      setShowReconnectPrompt(true)
+      // Limpar parâmetros da URL
+      window.history.replaceState({}, '', '/')
+    } else {
+      // Verificar se há um roomId na URL apenas se não houver sessão salva
+      const urlParams = new URLSearchParams(window.location.search)
+      const joinRoomId = urlParams.get('join')
+      if (joinRoomId) {
+        setRoomIdInput(joinRoomId)
+        setLobbyMode('join')
+      }
     }
 
     const newSocket = io(BACKEND_URL)
     
     newSocket.on('connect', () => {
       console.log('✅ Conectado ao servidor!')
+      
+      // Verificar sessão salva ao conectar
+      const savedRoomId = localStorage.getItem('fodinha_roomId')
+      const savedPlayerName = localStorage.getItem('fodinha_playerName')
+      
+      if (savedRoomId && savedPlayerName) {
+        setSavedSession({ roomId: savedRoomId, playerName: savedPlayerName })
+        setShowReconnectPrompt(true)
+      }
+      
       setAppState('lobby')
     })
 
     newSocket.on('disconnect', () => {
       console.log('❌ Desconectado do servidor')
       setAppState('disconnected')
+      
+      // Tentar reconectar automaticamente se estava em uma sala
+      console.log('🔄 Tentando reconectar...')
+      setTimeout(() => {
+        if (newSocket.disconnected) {
+          newSocket.connect()
+        }
+      }, 1000)
     })
 
     // Eventos do jogo
     newSocket.on('room-created', (data: { roomId: string }) => {
       console.log('🎮 Sala criada:', data.roomId)
+      // Salvar sessão no localStorage
+      localStorage.setItem('fodinha_roomId', data.roomId)
+      localStorage.setItem('fodinha_playerName', playerName)
     })
 
     newSocket.on('room-joined', (data: { success: boolean; roomId: string }) => {
       console.log('👤 Entrou na sala:', data.roomId)
+      // Salvar sessão no localStorage
+      const currentPlayerName = localStorage.getItem('fodinha_playerName_temp') || playerName
+      localStorage.setItem('fodinha_roomId', data.roomId)
+      localStorage.setItem('fodinha_playerName', currentPlayerName)
+      localStorage.removeItem('fodinha_playerName_temp')
     })
 
     newSocket.on('room-updated', (updatedRoom: Room) => {
@@ -70,6 +110,14 @@ export function Lobby() {
       console.log('🎲 Jogo iniciado!')
       setRoom(updatedRoom)
       setAppState('playing')
+      setShowReconnectPrompt(false)
+      
+      // Garantir que a sessão está salva
+      const myPlayer = updatedRoom.players.find(p => p.id === newSocket.id)
+      if (myPlayer) {
+        localStorage.setItem('fodinha_roomId', updatedRoom.id)
+        localStorage.setItem('fodinha_playerName', myPlayer.name)
+      }
     })
 
     newSocket.on('game-updated', (updatedRoom: Room) => {
@@ -117,10 +165,49 @@ export function Lobby() {
   const joinRoom = () => {
     if (!socket || !playerName.trim() || !roomIdInput.trim()) return
     
+    // Salvar temporariamente para usar no evento room-joined
+    localStorage.setItem('fodinha_playerName_temp', playerName.trim())
+    
     socket.emit('join-room', { 
       roomId: roomIdInput.trim().toUpperCase(), 
       playerName: playerName.trim() 
     })
+  }
+
+  const reconnectToRoom = () => {
+    if (!socket || !savedSession) return
+    
+    setPlayerName(savedSession.playerName)
+    setRoomIdInput(savedSession.roomId)
+    setShowReconnectPrompt(false)
+    
+    // Salvar novamente para garantir que está no localStorage
+    localStorage.setItem('fodinha_roomId', savedSession.roomId)
+    localStorage.setItem('fodinha_playerName', savedSession.playerName)
+    
+    socket.emit('join-room', { 
+      roomId: savedSession.roomId, 
+      playerName: savedSession.playerName 
+    })
+  }
+
+  const dismissReconnect = () => {
+    localStorage.removeItem('fodinha_roomId')
+    localStorage.removeItem('fodinha_playerName')
+    setSavedSession(null)
+    setShowReconnectPrompt(false)
+  }
+
+  const leaveRoom = () => {
+    localStorage.removeItem('fodinha_roomId')
+    localStorage.removeItem('fodinha_playerName')
+    setRoom(null)
+    setAppState('lobby')
+    setLobbyMode('menu')
+    if (socket) {
+      socket.disconnect()
+      socket.connect()
+    }
   }
 
   const startGame = () => {
@@ -167,6 +254,32 @@ export function Lobby() {
 
   // Tela de lobby (criar/entrar)
   if (appState === 'lobby') {
+    // Se há prompt de reconexão, mostrar apenas ele
+    if (showReconnectPrompt && savedSession) {
+      return (
+        <div className="app">
+          <div className="lobby-container">
+            <h1>🃏 Fodinha</h1>
+            
+            {error && <div className="error-message">{error}</div>}
+            
+            <div className="reconnect-prompt">
+              <h3>🔄 Reconectar?</h3>
+              <p>Você estava na sala <strong>{savedSession.roomId}</strong> como <strong>{savedSession.playerName}</strong></p>
+              <div className="button-row">
+                <button className="back-btn" onClick={dismissReconnect}>
+                  Nova Sala
+                </button>
+                <button className="action-btn" onClick={reconnectToRoom}>
+                  Reconectar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    }
+    
     return (
       <div className="app">
         <div className="lobby-container">
@@ -306,6 +419,10 @@ export function Lobby() {
             {!isHost && (
               <p className="waiting-text">Aguardando o host iniciar o jogo...</p>
             )}
+
+            <button className="leave-btn" onClick={leaveRoom}>
+              🚪 Sair da Sala
+            </button>
           </div>
         </div>
       </div>

@@ -43,19 +43,23 @@ export class RoomManager {
       throw new Error('Sala não encontrada');
     }
 
+    // Verificar se jogador já está na sala (reconexão)
+    const existingPlayer = room.players.find(p => p.name === playerName);
+    if (existingPlayer) {
+      // Permitir reconexão mesmo durante o jogo
+      existingPlayer.id = playerId; // Atualizar ID do socket
+      existingPlayer.isConnected = true;
+      console.log(`🔄 ${playerName} reconectou à sala ${roomId}`);
+      return true;
+    }
+
+    // Novo jogador tentando entrar
     if (room.players.length >= room.maxPlayers) {
       throw new Error('Sala cheia');
     }
 
     if (room.gameState && room.gameState.phase !== 'waiting') {
       throw new Error('Jogo já começou');
-    }
-
-    // Verificar se jogador já está na sala
-    const existingPlayer = room.players.find(p => p.id === playerId);
-    if (existingPlayer) {
-      existingPlayer.isConnected = true;
-      return true;
     }
 
     const player: Player = {
@@ -78,11 +82,12 @@ export class RoomManager {
     const room = this.rooms.get(roomId);
     if (!room) return;
 
-    const playerIndex = room.players.findIndex(p => p.id === playerId);
-    if (playerIndex === -1) return;
+    const player = room.players.find(p => p.id === playerId);
+    if (!player) return;
 
     // Se o jogo não começou, remover jogador
     if (!room.gameState || room.gameState.phase === 'waiting') {
+      const playerIndex = room.players.findIndex(p => p.id === playerId);
       room.players.splice(playerIndex, 1);
 
       // Se era o host, passar para próximo jogador
@@ -97,7 +102,8 @@ export class RoomManager {
       }
     } else {
       // Se jogo começou, apenas marcar como desconectado
-      room.players[playerIndex].isConnected = false;
+      player.isConnected = false;
+      console.log(`⚠️ ${player.name} desconectou (jogo em andamento)`);
     }
   }
 
@@ -197,15 +203,32 @@ export class RoomManager {
   cleanupOldRooms(): void {
     const now = new Date();
     const maxAge = 24 * 60 * 60 * 1000; // 24 horas
+    const abandonedAge = 5 * 60 * 1000; // 5 minutos sem jogadores conectados
 
     this.rooms.forEach((room, roomId) => {
       const age = now.getTime() - room.createdAt.getTime();
       const hasConnectedPlayers = room.players.some(p => p.isConnected);
 
-      if (age > maxAge || (!hasConnectedPlayers && room.players.length === 0)) {
+      // Deletar se:
+      // 1. Sala tem mais de 24 horas
+      // 2. Sala está vazia
+      // 3. Nenhum jogador conectado por mais de 5 minutos
+      if (age > maxAge || room.players.length === 0 || (!hasConnectedPlayers && age > abandonedAge)) {
+        console.log(`🧹 Removendo sala abandonada: ${roomId}`);
         this.rooms.delete(roomId);
         this.gameManagers.delete(roomId);
       }
     });
+  }
+
+  // Deletar uma sala específica
+  deleteRoom(roomId: string): boolean {
+    const room = this.rooms.get(roomId);
+    if (!room) return false;
+    
+    console.log(`🗑️ Sala ${roomId} deletada manualmente`);
+    this.rooms.delete(roomId);
+    this.gameManagers.delete(roomId);
+    return true;
   }
 }

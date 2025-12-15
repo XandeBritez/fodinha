@@ -220,16 +220,49 @@ io.on('connection', (socket: Socket) => {
   // Entrar na sala
   socket.on('join-room', (data: { roomId: string; playerName: string }) => {
     try {
+      const room = roomManager.getRoom(data.roomId);
+      
+      // Verificar se é uma reconexão (jogador com mesmo nome já existe)
+      const existingPlayer = room?.players.find(p => p.name === data.playerName);
+      const isReconnection = existingPlayer !== undefined;
+      
+      // Se for reconexão, remover o socket antigo do mapa
+      if (isReconnection && existingPlayer) {
+        // Encontrar e remover o socket ID antigo do mapa
+        for (const [oldSocketId, roomId] of socketToRoom.entries()) {
+          if (roomId === data.roomId) {
+            const oldPlayer = room?.players.find(p => p.id === oldSocketId && p.name === data.playerName);
+            if (oldPlayer) {
+              socketToRoom.delete(oldSocketId);
+              console.log(`🔄 Removendo socket antigo ${oldSocketId} de ${data.playerName}`);
+              break;
+            }
+          }
+        }
+      }
+      
       roomManager.joinRoom(data.roomId, socket.id, data.playerName);
       socket.join(data.roomId);
       socketToRoom.set(socket.id, data.roomId);
 
-      console.log(`👤 ${data.playerName} entrou na sala ${data.roomId}`);
+      console.log(`👤 ${data.playerName} ${isReconnection ? 'reconectou na' : 'entrou na'} sala ${data.roomId}`);
 
       socket.emit('room-joined', { success: true, roomId: data.roomId });
       
-      const room = roomManager.getRoom(data.roomId);
+      // Se o jogo já começou, enviar game-started para o jogador reconectado
+      if (room?.gameState && room.gameState.phase !== 'waiting') {
+        socket.emit('game-started', room);
+      }
+      
       io.to(data.roomId).emit('room-updated', room);
+      
+      // Notificar outros jogadores sobre a reconexão
+      if (isReconnection && room?.gameState) {
+        io.to(data.roomId).emit('game-event', { 
+          type: 'reconnect', 
+          message: `🔄 ${data.playerName} reconectou!` 
+        });
+      }
     } catch (error: any) {
       socket.emit('error', { message: error.message });
     }
@@ -431,11 +464,10 @@ io.on('connection', (socket: Socket) => {
   });
 });
 
-// Limpar salas antigas a cada hora
+// Limpar salas abandonadas a cada 1 minuto
 setInterval(() => {
   roomManager.cleanupOldRooms();
-  console.log('🧹 Limpeza de salas antigas executada');
-}, 60 * 60 * 1000);
+}, 60 * 1000);
 
 const PORT = process.env.PORT || 3001;
 

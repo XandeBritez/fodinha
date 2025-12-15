@@ -608,3 +608,65 @@ button:disabled {
   transform: translateY(-3px);
   box-shadow: 0 15px 30px rgba(102, 126, 234, 0.5);
 }
+
+
+/* Reconnect Prompt */
+.reconnect-prompt {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 25px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+}
+
+.reconnect-prompt h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.3rem;
+}
+
+.reconnect-prompt p {
+  margin: 0 0 20px 0;
+  font-size: 1rem;
+  opacity: 0.95;
+}
+
+.reconnect-prompt strong {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.reconnect-prompt .button-row {
+  margin-top: 15px;
+}
+
+.reconnect-prompt .back-btn,
+.reconnect-prompt .action-btn {
+  background: white;
+  color: #667eea;
+}
+
+.reconnect-prompt .back-btn:hover,
+.reconnect-prompt .action-btn:hover {
+  background: #f0f0f0;
+}
+
+/* Leave Button */
+.leave-btn {
+  width: 100%;
+  padding: 15px 30px;
+  font-size: 1rem;
+  font-weight: bold;
+  color: white;
+  background: linear-gradient(135deg, #f44336 0%, #c62828 100%);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 20px;
+}
+
+.leave-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(244, 67, 54, 0.4);
+}
