@@ -5,7 +5,7 @@ import { Room } from '../types'
 import { GameBoard } from '../components/GameBoard'
 import '../App.css'
 
-const BACKEND_URL = 'https://ksg8k4s4okckoggw00ws0k0g.5.78.40.109.sslip.io'
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001'
 
 type AppState = 'disconnected' | 'lobby' | 'waiting' | 'playing'
 
@@ -19,9 +19,18 @@ export function Lobby() {
   const [error, setError] = useState<string>('')
   const [lobbyMode, setLobbyMode] = useState<'menu' | 'create' | 'join'>('menu')
   const [showToast, setShowToast] = useState(false)
+  const [isPrivate, setIsPrivate] = useState(false)
 
   // Conectar ao servidor automaticamente
   useEffect(() => {
+    // Verificar se há um roomId na URL
+    const urlParams = new URLSearchParams(window.location.search)
+    const joinRoomId = urlParams.get('join')
+    if (joinRoomId) {
+      setRoomIdInput(joinRoomId)
+      setLobbyMode('join')
+    }
+
     const newSocket = io(BACKEND_URL)
     
     newSocket.on('connect', () => {
@@ -85,7 +94,8 @@ export function Lobby() {
     
     socket.emit('create-room', { 
       playerName: playerName.trim(), 
-      maxPlayers: 10 
+      maxPlayers: 10,
+      isPrivate 
     })
   }
 
@@ -160,6 +170,9 @@ export function Lobby() {
                   <button className="menu-btn" onClick={() => setLobbyMode('join')}>
                     🚪 Entrar em Sala
                   </button>
+                  <button className="menu-btn" onClick={() => navigate('/salas')}>
+                    🌐 Salas Públicas
+                  </button>
                 </div>
                 <button className="rules-link" onClick={() => navigate('/regras')}>
                   📖 Como Jogar
@@ -178,6 +191,16 @@ export function Lobby() {
                     onChange={(e) => setPlayerName(e.target.value)}
                     maxLength={20}
                   />
+                </div>
+                <div className="checkbox-group">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={isPrivate}
+                      onChange={(e) => setIsPrivate(e.target.checked)}
+                    />
+                    <span>🔒 Sala Privada (não aparece na lista pública)</span>
+                  </label>
                 </div>
                 <div className="button-row">
                   <button className="back-btn" onClick={() => setLobbyMode('menu')}>

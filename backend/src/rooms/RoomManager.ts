@@ -6,7 +6,7 @@ export class RoomManager {
   private gameManagers: Map<string, GameManager> = new Map();
 
   // Criar sala
-  createRoom(hostId: string, hostName: string, maxPlayers: number = 10): string {
+  createRoom(hostId: string, hostName: string, maxPlayers: number = 10, isPrivate: boolean = false): string {
     const roomId = this.generateRoomId();
 
     const host: Player = {
@@ -26,7 +26,8 @@ export class RoomManager {
       players: [host],
       gameState: null,
       createdAt: new Date(),
-      maxPlayers
+      maxPlayers,
+      isPrivate
     };
 
     this.rooms.set(roomId, room);
@@ -158,6 +159,16 @@ export class RoomManager {
     gameManager.startGame();
   }
 
+  // Continuar para próxima trick (após delay)
+  continueTrick(roomId: string): void {
+    const gameManager = this.gameManagers.get(roomId);
+    if (!gameManager) {
+      throw new Error('Sala não encontrada');
+    }
+
+    gameManager.continueTrick();
+  }
+
   // Obter sala
   getRoom(roomId: string): Room | undefined {
     return this.rooms.get(roomId);
@@ -166,6 +177,11 @@ export class RoomManager {
   // Obter todas as salas
   getAllRooms(): Room[] {
     return Array.from(this.rooms.values());
+  }
+
+  // Obter apenas salas públicas
+  getPublicRooms(): Room[] {
+    return Array.from(this.rooms.values()).filter(room => !room.isPrivate);
   }
 
   // Gerar ID único para sala

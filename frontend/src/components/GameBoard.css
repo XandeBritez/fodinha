@@ -347,6 +347,15 @@
   gap: 10px;
 }
 
+.preview-cards .card {
+  opacity: 1 !important;
+  background: #ffffff !important;
+}
+
+.preview-cards .card-center {
+  opacity: 0.4 !important;
+}
+
 .prediction-buttons {
   display: flex;
   gap: 10px;
@@ -459,4 +468,440 @@
 .restart-btn:hover {
   transform: scale(1.05);
   box-shadow: 0 0 30px rgba(76, 175, 80, 0.6);
+}
+
+/* Countdown Overlay */
+.countdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.countdown-number {
+  font-size: 10rem;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 0 0 30px rgba(255, 215, 0, 0.8),
+               0 0 60px rgba(255, 215, 0, 0.5);
+  animation: pulse 1s ease-in-out;
+}
+
+.countdown-text {
+  font-size: 2rem;
+  color: white;
+  margin-top: 20px;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* Trick Winner Announcement */
+.trick-winner-announcement {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  animation: zoomIn 0.5s ease-out;
+}
+
+.winner-trophy {
+  font-size: 8rem;
+  animation: bounce 0.6s ease-in-out;
+}
+
+.winner-name {
+  font-size: 4rem;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 0 0 30px rgba(255, 215, 0, 0.8),
+               0 0 60px rgba(255, 215, 0, 0.5),
+               0 5px 15px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+.winner-text {
+  font-size: 2.5rem;
+  color: white;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  text-align: center;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  25% {
+    transform: translateY(-30px) scale(1.1);
+  }
+  50% {
+    transform: translateY(0) scale(1);
+  }
+  75% {
+    transform: translateY(-15px) scale(1.05);
+  }
+}
+
+/* Mobile Toggles - OCULTOS POR PADRÃO */
+.mobile-toggle {
+  display: none !important;
+  position: fixed;
+  top: 120px;
+  width: 50px;
+  height: 50px;
+  min-width: 50px;
+  min-height: 50px;
+  padding: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1e7a3e 0%, #0d5c2a 100%);
+  border: 3px solid #ffd700;
+  color: #ffd700;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 200;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5),
+              0 0 15px rgba(255, 215, 0, 0.3);
+  transition: all 0.3s ease;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mobile-toggle:hover {
+  background: linear-gradient(135deg, #2a9d52 0%, #1e7a3e 100%);
+  border-color: #ffed4e;
+  transform: scale(1.1);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.6),
+              0 0 25px rgba(255, 215, 0, 0.5);
+}
+
+.mobile-toggle:active {
+  transform: scale(0.95);
+}
+
+.mobile-toggle-left {
+  left: 15px;
+}
+
+.mobile-toggle-right {
+  right: 15px;
+}
+
+/* Sheet Overlay - OCULTO POR PADRÃO */
+.sheet-overlay {
+  display: none !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 300;
+  animation: fadeIn 0.3s ease;
+}
+
+/* Sheet Container - OCULTO POR PADRÃO */
+.sheet {
+  display: none !important;
+  position: fixed;
+  top: 0;
+  width: 80%;
+  max-width: 350px;
+  height: 100%;
+  background: #1a1a2e;
+  z-index: 301;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  flex-direction: column;
+}
+
+.sheet-left {
+  left: 0;
+  animation: slideInLeft 0.3s ease;
+}
+
+.sheet-right {
+  right: 0;
+  animation: slideInRight 0.3s ease;
+}
+
+.sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #1e7a3e 0%, #0d5c2a 100%);
+  border-bottom: 3px solid #ffd700;
+}
+
+.sheet-header h3 {
+  margin: 0;
+  color: #ffd700;
+  font-size: 1.3rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.sheet-close {
+  background: rgba(255, 215, 0, 0.2);
+  border: 2px solid #ffd700;
+  color: #ffd700;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.sheet-close:hover {
+  background: rgba(255, 215, 0, 0.3);
+  transform: rotate(90deg);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.sheet-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+  padding-bottom: 80px;
+}
+
+/* Ajustar GameLog dentro do sheet */
+.sheet-content .game-log {
+  position: static !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  display: flex !important;
+}
+
+.sheet-content .game-log-header {
+  display: none !important;
+}
+
+.sheet-content .game-log-content {
+  flex: 1 !important;
+  padding: 0 !important;
+}
+
+.sheet-content .game-log-message {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-left: 3px solid #ffd700 !important;
+  margin-bottom: 10px;
+}
+
+/* Ajustar PlayerInfo dentro do sheet */
+.sheet-content .player-info {
+  margin-bottom: 15px;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: auto !important;
+  box-sizing: border-box;
+}
+
+.sheet-content .player-info.current-turn::before {
+  left: -10px !important;
+  font-size: 1.2rem !important;
+}
+
+/* Animations */
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  /* Mostrar toggles APENAS no mobile */
+  .mobile-toggle {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Mostrar sheets APENAS no mobile */
+  .sheet-overlay {
+    display: block !important;
+  }
+
+  .sheet {
+    display: flex !important;
+  }
+
+  /* Ocultar sidebars no mobile */
+  .players-sidebar,
+  .game-log {
+    display: none !important;
+  }
+
+  /* Ajustar mesa para mobile */
+  .game-table {
+    width: 90vw;
+    height: 400px;
+    top: 40%;
+  }
+
+  /* Ajustar header para mobile */
+  .game-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  /* Ajustar action-area para mobile */
+  .action-area {
+    padding: 20px 15px;
+    margin: 0;
+    bottom: auto;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    margin-top: 60px;
+    min-width: 85vw;
+    max-width: 90vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .action-area .prediction-panel,
+  .action-area .waiting-panel,
+  .action-area .scoring-panel,
+  .action-area .finished-panel {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Ajustar cards-footer para mobile */
+  .cards-footer {
+    padding: 10px;
+    bottom: 10px;
+    width: 95%;
+    max-width: 100%;
+  }
+
+  /* Efeito de leque - cartas empilhadas */
+  .cards-hand {
+    gap: 0;
+    position: relative;
+    width: 100%;
+    justify-content: center;
+    padding: 0 10px;
+  }
+
+  .cards-hand .card,
+  .cards-hand > div {
+    margin-left: -40px;
+    transition: all 0.3s ease;
+  }
+
+  .cards-hand .card:first-child,
+  .cards-hand > div:first-child {
+    margin-left: 0;
+  }
+
+  /* Carta levanta levemente ao passar por cima */
+  .cards-hand .card,
+  .cards-hand > div .card-back {
+    transition: transform 0.2s ease, z-index 0s;
+  }
+
+  .cards-hand .card.playable:hover,
+  .cards-hand > div:hover .card-back {
+    transform: translateY(-40px) scale(1.2);
+    z-index: 100;
+    box-shadow: 0 15px 40px rgba(255, 215, 0, 0.6);
+  }
+
+  /* Cartas adjacentes também levantam um pouco (efeito cascata) */
+  .cards-hand .card.playable:hover + .card,
+  .cards-hand .card.playable:hover + div,
+  .cards-hand > div:hover + .card,
+  .cards-hand > div:hover + div {
+    transform: translateY(-15px);
+    z-index: 50;
+  }
+
+  /* Efeito de toque/hover mais responsivo */
+  .cards-hand .card.playable:active,
+  .cards-hand > div:active .card-back {
+    transform: translateY(-45px) scale(1.25);
+  }
+
+  /* Ajustar tamanho das cartas no mobile */
+  .cards-hand .card,
+  .cards-hand .card-back {
+    width: 70px !important;
+    height: 100px !important;
+  }
 }

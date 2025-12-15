@@ -1,5 +1,5 @@
 .card {
-  background: white;
+  background: #ffffff;
   border: 2px solid #333;
   border-radius: 8px;
   position: relative;
@@ -9,6 +9,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   transition: all 0.2s ease;
   user-select: none;
+  opacity: 1;
 }
 
 .card.small {
@@ -84,7 +85,7 @@
 
 .card-center {
   font-size: 3em;
-  opacity: 0.3;
+  opacity: 0.15;
 }
 
 .card.small .card-center {

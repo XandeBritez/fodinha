@@ -190,8 +190,6 @@ export class GameManager {
       winner.roundsWon++;
     }
 
-    // Limpar cartas jogadas
-    gameState.playedCards = [];
     gameState.currentTrickWinner = winnerId;
 
     // Vencedor começa próxima trick
@@ -201,10 +199,31 @@ export class GameManager {
     // Verificar se a rodada acabou
     const allCardsPlayed = activePlayers.every(p => p.cards.length === 0);
     
+    // Mudar para fase trick-complete para dar tempo de visualizar
+    gameState.phase = 'trick-complete';
+    
+    // Guardar se é a última trick
     if (allCardsPlayed) {
+      (gameState as any).isLastTrick = true;
+    } else {
+      (gameState as any).isLastTrick = false;
+    }
+  }
+
+  // Continuar para próxima trick (chamado após o delay)
+  continueTrick(): void {
+    const gameState = this.room.gameState;
+    if (!gameState || gameState.phase !== 'trick-complete') return;
+
+    // Limpar cartas jogadas
+    gameState.playedCards = [];
+
+    // Verificar se era a última trick
+    if ((gameState as any).isLastTrick) {
       gameState.phase = 'scoring';
       this.scoreRound();
     } else {
+      gameState.phase = 'playing';
       gameState.trickNumber++;
     }
   }

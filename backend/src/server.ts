@@ -39,18 +39,31 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Listar salas públicas
+app.get('/rooms/public', (req, res) => {
+  const publicRooms = roomManager.getPublicRooms().map(room => ({
+    id: room.id,
+    hostName: room.players.find(p => p.id === room.hostId)?.name || 'Host',
+    playerCount: room.players.length,
+    maxPlayers: room.maxPlayers,
+    isPlaying: room.gameState?.phase !== 'waiting' && room.gameState !== null,
+    createdAt: room.createdAt
+  }));
+  res.json(publicRooms);
+});
+
 // Socket.io eventos
 io.on('connection', (socket: Socket) => {
   console.log('✅ Cliente conectado:', socket.id);
 
   // Criar sala
-  socket.on('create-room', (data: { playerName: string; maxPlayers?: number }) => {
+  socket.on('create-room', (data: { playerName: string; maxPlayers?: number; isPrivate?: boolean }) => {
     try {
-      const roomId = roomManager.createRoom(socket.id, data.playerName, data.maxPlayers || 10);
+      const roomId = roomManager.createRoom(socket.id, data.playerName, data.maxPlayers || 10, data.isPrivate || false);
       socket.join(roomId);
       socketToRoom.set(socket.id, roomId);
 
-      console.log(`🎮 Sala criada: ${roomId} por ${data.playerName}`);
+      console.log(`🎮 Sala criada: ${roomId} por ${data.playerName} (${data.isPrivate ? 'Privada' : 'Pública'})`);
 
       socket.emit('room-created', { roomId });
       
@@ -183,8 +196,8 @@ io.on('connection', (socket: Socket) => {
 
       const updatedRoom = roomManager.getRoom(roomId);
       
-      // Verificar se houve vencedor de trick
-      if (updatedRoom?.gameState?.currentTrickWinner && updatedRoom.gameState.playedCards.length === 0) {
+      // Verificar se entrou na fase trick-complete
+      if (updatedRoom?.gameState?.phase === 'trick-complete') {
         const winner = updatedRoom.players.find(p => p.id === updatedRoom.gameState?.currentTrickWinner);
         if (winner) {
           io.to(roomId).emit('game-event', { 
@@ -192,6 +205,20 @@ io.on('connection', (socket: Socket) => {
             message: `🏆 ${winner.name} ganhou a trick!` 
           });
         }
+
+        // Enviar atualização com as cartas ainda visíveis
+        io.to(roomId).emit('game-updated', updatedRoom);
+
+        // Aguardar 3 segundos antes de continuar
+        setTimeout(() => {
+          roomManager.continueTrick(roomId);
+          const nextRoom = roomManager.getRoom(roomId);
+          if (nextRoom) {
+            io.to(roomId).emit('game-updated', nextRoom);
+          }
+        }, 3000);
+        
+        return; // Não enviar game-updated agora
       }
 
       // Verificar perda de vidas (fim de rodada)

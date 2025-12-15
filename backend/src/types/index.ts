@@ -24,7 +24,7 @@ export interface PlayedCard {
   order: number;
 }
 
-export type GamePhase = 'waiting' | 'prediction' | 'playing' | 'scoring' | 'finished';
+export type GamePhase = 'waiting' | 'prediction' | 'playing' | 'trick-complete' | 'scoring' | 'finished';
 
 export interface GameState {
   currentRound: number;
@@ -46,4 +46,5 @@ export interface Room {
   gameState: GameState | null;
   createdAt: Date;
   maxPlayers: number;
+  isPrivate: boolean;
 }

@@ -18,6 +18,10 @@ export function GameBoard({ room, myPlayerId, onPlayCard, onMakePrediction, onRe
   const { gameState, players } = room;
   const [gameLog, setGameLog] = useState<string[]>([]);
   const [lastRound, setLastRound] = useState(0);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [trickWinnerName, setTrickWinnerName] = useState<string | null>(null);
+  const [showPlayersSheet, setShowPlayersSheet] = useState(false);
+  const [showHistorySheet, setShowHistorySheet] = useState(false);
 
   // Escutar eventos do servidor via window event
   useEffect(() => {
@@ -47,6 +51,39 @@ export function GameBoard({ room, myPlayerId, onPlayCard, onMakePrediction, onRe
       setLastRound(gameState.currentRound);
     }
   }, [gameState?.currentRound, lastRound]);
+
+  // Countdown quando trick completa
+  useEffect(() => {
+    if (!gameState) return;
+
+    if (gameState.phase === 'trick-complete') {
+      // Encontrar o vencedor da trick
+      const winner = players.find(p => p.id === gameState.currentTrickWinner);
+      setTrickWinnerName(winner?.name || null);
+
+      // Aguardar 1.5 segundos antes de iniciar countdown
+      setTimeout(() => {
+        setCountdown(3);
+        const interval = setInterval(() => {
+          setCountdown(prev => {
+            if (prev === null || prev <= 1) {
+              clearInterval(interval);
+              return null;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }, 1500);
+
+      return () => {
+        setCountdown(null);
+        setTrickWinnerName(null);
+      };
+    } else {
+      setCountdown(null);
+      setTrickWinnerName(null);
+    }
+  }, [gameState?.phase, gameState?.currentTrickWinner, players]);
   
   if (!gameState) return null;
 
@@ -90,6 +127,26 @@ export function GameBoard({ room, myPlayerId, onPlayCard, onMakePrediction, onRe
 
   return (
     <div className="game-board">
+      {/* Trick Winner + Countdown Overlay */}
+      {gameState.phase === 'trick-complete' && (
+        <div className="countdown-overlay">
+          {trickWinnerName && countdown === null ? (
+            <>
+              <div className="trick-winner-announcement">
+                <div className="winner-trophy">🏆</div>
+                <div className="winner-name">{trickWinnerName}</div>
+                <div className="winner-text">ganhou a trick!</div>
+              </div>
+            </>
+          ) : countdown !== null ? (
+            <>
+              <div className="countdown-number">{countdown}</div>
+              <div className="countdown-text">Próxima trick...</div>
+            </>
+          ) : null}
+        </div>
+      )}
+
       {/* Header */}
       <div className="game-header">
         <div className="round-info">
@@ -249,7 +306,62 @@ export function GameBoard({ room, myPlayerId, onPlayCard, onMakePrediction, onRe
         </div>
       )}
 
-      {/* Sidebar com jogadores - FORA DA MESA */}
+      {/* Toggle Buttons - Mobile Only */}
+      <button 
+        className="mobile-toggle mobile-toggle-left"
+        onClick={() => setShowPlayersSheet(true)}
+        aria-label="Ver jogadores"
+      >
+        👥
+      </button>
+      <button 
+        className="mobile-toggle mobile-toggle-right"
+        onClick={() => setShowHistorySheet(true)}
+        aria-label="Ver histórico"
+      >
+        📋
+      </button>
+
+      {/* Players Sheet - Mobile */}
+      {showPlayersSheet && (
+        <>
+          <div className="sheet-overlay" onClick={() => setShowPlayersSheet(false)} />
+          <div className="sheet sheet-left">
+            <div className="sheet-header">
+              <h3>👥 Jogadores</h3>
+              <button className="sheet-close" onClick={() => setShowPlayersSheet(false)}>✕</button>
+            </div>
+            <div className="sheet-content">
+              {players.map((player) => (
+                <PlayerInfo
+                  key={player.id}
+                  player={player}
+                  isCurrentTurn={currentPlayer?.id === player.id}
+                  isYou={player.id === myPlayerId}
+                />
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* History Sheet - Mobile */}
+      {showHistorySheet && (
+        <>
+          <div className="sheet-overlay" onClick={() => setShowHistorySheet(false)} />
+          <div className="sheet sheet-right">
+            <div className="sheet-header">
+              <h3>📋 Histórico</h3>
+              <button className="sheet-close" onClick={() => setShowHistorySheet(false)}>✕</button>
+            </div>
+            <div className="sheet-content">
+              <GameLog messages={gameLog} />
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Sidebar com jogadores - FORA DA MESA - Desktop Only */}
       <div className="players-sidebar">
         {players.map((player) => (
           <PlayerInfo
@@ -261,7 +373,7 @@ export function GameBoard({ room, myPlayerId, onPlayCard, onMakePrediction, onRe
         ))}
       </div>
 
-      {/* Game Log - Chat do Sistema */}
+      {/* Game Log - Chat do Sistema - Desktop Only */}
       <GameLog messages={gameLog} />
 
       {/* Footer com as cartas do jogador - FORA DA MESA */}
