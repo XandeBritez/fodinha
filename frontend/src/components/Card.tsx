@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Card as CardType } from '../types';
 import './Card.css';
 
@@ -24,13 +25,25 @@ const SUIT_COLORS: Record<string, string> = {
 };
 
 export function Card({ card, onClick, isPlayable = false, isManilha = false, size = 'medium' }: CardProps) {
+  const [isTouched, setIsTouched] = useState(false);
   const symbol = SUIT_SYMBOLS[card.suit];
   const color = SUIT_COLORS[card.suit];
 
+  const handleTouchStart = () => {
+    if (isPlayable) setIsTouched(true);
+  };
+
+  const handleTouchEnd = () => {
+    setIsTouched(false);
+  };
+
   return (
     <div
-      className={`card ${size} ${isPlayable ? 'playable' : ''} ${isManilha ? 'manilha' : ''}`}
+      className={`card ${size} ${isPlayable ? 'playable' : ''} ${isManilha ? 'manilha' : ''} ${isTouched ? 'touched' : ''}`}
       onClick={isPlayable ? onClick : undefined}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
       style={{ borderColor: isManilha ? '#ffd700' : undefined }}
     >
       <div className="card-corner top-left" style={{ color }}>

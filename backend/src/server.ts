@@ -32,9 +32,79 @@ const socketToRoom = new Map<string, string>();
 
 // Timers de turno por sala
 const turnTimers = new Map<string, NodeJS.Timeout>();
-const TURN_TIME_LIMIT = 45000; // 45 segundos
+const PLAY_CARD_TIME_LIMIT = 15000; // 15 segundos para jogar carta
+const PREDICTION_TIME_LIMIT = 20000; // 20 segundos para fazer previsão
 
-// Função para iniciar timer de turno
+// Função para iniciar timer de previsão
+function startPredictionTimer(roomId: string) {
+  // Limpar timer anterior se existir
+  clearTurnTimer(roomId);
+
+  const room = roomManager.getRoom(roomId);
+  if (!room || !room.gameState || room.gameState.phase !== 'prediction') return;
+
+  const activePlayers = room.players.filter(p => !p.isEliminated);
+  const predictionsCount = Object.keys(room.gameState.predictions).length;
+  const currentPredictingIndex = (room.gameState.currentPlayerIndex + predictionsCount) % activePlayers.length;
+  const currentPlayer = activePlayers[currentPredictingIndex];
+  if (!currentPlayer) return;
+
+  // Enviar evento de início do timer
+  io.to(roomId).emit('turn-timer-start', { 
+    playerId: currentPlayer.id,
+    timeLimit: PREDICTION_TIME_LIMIT,
+    type: 'prediction'
+  });
+
+  // Criar timer
+  const timer = setTimeout(() => {
+    const currentRoom = roomManager.getRoom(roomId);
+    if (!currentRoom || !currentRoom.gameState || currentRoom.gameState.phase !== 'prediction') return;
+
+    const currentActivePlayers = currentRoom.players.filter(p => !p.isEliminated);
+    const currentPredictionsCount = Object.keys(currentRoom.gameState.predictions).length;
+    const playerIndex = (currentRoom.gameState.currentPlayerIndex + currentPredictionsCount) % currentActivePlayers.length;
+    const playerToPredict = currentActivePlayers[playerIndex];
+    
+    if (!playerToPredict || currentRoom.gameState.predictions[playerToPredict.id] !== undefined) return;
+
+    // Fazer previsão aleatória (0 a cardsPerPlayer)
+    const randomPrediction = Math.floor(Math.random() * (currentRoom.gameState.cardsPerPlayer + 1));
+
+    console.log(`⏰ Tempo esgotado! ${playerToPredict.name} fez previsão aleatória: ${randomPrediction}`);
+
+    io.to(roomId).emit('game-event', { 
+      type: 'timeout', 
+      message: `⏰ Tempo esgotado! ${playerToPredict.name} previu ${randomPrediction} automaticamente` 
+    });
+
+    try {
+      roomManager.makePrediction(roomId, playerToPredict.id, randomPrediction);
+
+      io.to(roomId).emit('game-event', { 
+        type: 'prediction', 
+        message: `🔮 ${playerToPredict.name} previu ${randomPrediction}` 
+      });
+
+      const updatedRoom = roomManager.getRoom(roomId);
+      io.to(roomId).emit('game-updated', updatedRoom);
+
+      // Se ainda está na fase de previsão, iniciar timer para próximo
+      if (updatedRoom?.gameState?.phase === 'prediction') {
+        startPredictionTimer(roomId);
+      } else if (updatedRoom?.gameState?.phase === 'playing') {
+        // Se entrou na fase de jogo, iniciar timer de jogada
+        startTurnTimer(roomId);
+      }
+    } catch (error: any) {
+      console.error('Erro ao fazer previsão automática:', error.message);
+    }
+  }, PREDICTION_TIME_LIMIT);
+
+  turnTimers.set(roomId, timer);
+}
+
+// Função para iniciar timer de turno (jogar carta)
 function startTurnTimer(roomId: string) {
   // Limpar timer anterior se existir
   clearTurnTimer(roomId);
@@ -49,7 +119,8 @@ function startTurnTimer(roomId: string) {
   // Enviar evento de início do timer
   io.to(roomId).emit('turn-timer-start', { 
     playerId: currentPlayer.id,
-    timeLimit: TURN_TIME_LIMIT 
+    timeLimit: PLAY_CARD_TIME_LIMIT,
+    type: 'play-card'
   });
 
   // Criar timer
@@ -106,12 +177,14 @@ function startTurnTimer(roomId: string) {
           const nextRoom = roomManager.getRoom(roomId);
           if (nextRoom) {
             io.to(roomId).emit('game-updated', nextRoom);
-            // Iniciar timer para próximo turno
+            // Iniciar timer apropriado (timeout automático - trick complete)
             if (nextRoom.gameState?.phase === 'playing') {
               startTurnTimer(roomId);
+            } else if (nextRoom.gameState?.phase === 'prediction') {
+              startPredictionTimer(roomId);
             }
           }
-        }, 3000);
+        }, 5000);
         
         return;
       }
@@ -142,14 +215,16 @@ function startTurnTimer(roomId: string) {
 
       io.to(roomId).emit('game-updated', updatedRoom);
 
-      // Iniciar timer para próximo turno
+      // Iniciar timer apropriado (dentro do timeout automático)
       if (updatedRoom?.gameState?.phase === 'playing') {
         startTurnTimer(roomId);
+      } else if (updatedRoom?.gameState?.phase === 'prediction') {
+        startPredictionTimer(roomId);
       }
     } catch (error: any) {
       console.error('Erro ao jogar carta automática:', error.message);
     }
-  }, TURN_TIME_LIMIT);
+  }, PLAY_CARD_TIME_LIMIT);
 
   turnTimers.set(roomId, timer);
 }
@@ -280,6 +355,9 @@ io.on('connection', (socket: Socket) => {
 
       const room = roomManager.getRoom(roomId);
       io.to(roomId).emit('game-started', room);
+      
+      // Iniciar timer de previsão
+      startPredictionTimer(roomId);
     } catch (error: any) {
       socket.emit('error', { message: error.message });
     }
@@ -307,9 +385,15 @@ io.on('connection', (socket: Socket) => {
       const updatedRoom = roomManager.getRoom(roomId);
       io.to(roomId).emit('game-updated', updatedRoom);
 
-      // Se entrou na fase de jogo, iniciar timer
+      // Limpar timer de previsão anterior
+      clearTurnTimer(roomId);
+
+      // Se entrou na fase de jogo, iniciar timer de jogada
       if (updatedRoom?.gameState?.phase === 'playing') {
         startTurnTimer(roomId);
+      } else if (updatedRoom?.gameState?.phase === 'prediction') {
+        // Se ainda está na fase de previsão, iniciar timer para próximo jogador
+        startPredictionTimer(roomId);
       }
     } catch (error: any) {
       socket.emit('error', { message: error.message });
@@ -393,18 +477,20 @@ io.on('connection', (socket: Socket) => {
         // Enviar atualização com as cartas ainda visíveis
         io.to(roomId).emit('game-updated', updatedRoom);
 
-        // Aguardar 3 segundos antes de continuar
+        // Aguardar 5 segundos antes de continuar (1.5s anúncio + 3s countdown)
         setTimeout(() => {
           roomManager.continueTrick(roomId);
           const nextRoom = roomManager.getRoom(roomId);
           if (nextRoom) {
             io.to(roomId).emit('game-updated', nextRoom);
-            // Iniciar timer para próximo turno
+            // Iniciar timer apropriado (jogada manual - trick complete)
             if (nextRoom.gameState?.phase === 'playing') {
               startTurnTimer(roomId);
+            } else if (nextRoom.gameState?.phase === 'prediction') {
+              startPredictionTimer(roomId);
             }
           }
-        }, 3000);
+        }, 5000);
         
         return; // Não enviar game-updated agora
       }
@@ -436,9 +522,11 @@ io.on('connection', (socket: Socket) => {
 
       io.to(roomId).emit('game-updated', updatedRoom);
 
-      // Iniciar timer para próximo turno
+      // Iniciar timer apropriado
       if (updatedRoom?.gameState?.phase === 'playing') {
         startTurnTimer(roomId);
+      } else if (updatedRoom?.gameState?.phase === 'prediction') {
+        startPredictionTimer(roomId);
       }
     } catch (error: any) {
       socket.emit('error', { message: error.message });

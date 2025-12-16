@@ -70,10 +70,13 @@ export class GameManager {
 
   // Calcular quantas cartas por rodada (1-9-1)
   private getCardsForRound(roundNumber: number): number {
-    if (roundNumber <= 9) {
-      return roundNumber; // 1, 2, 3, ..., 9
+    // Ciclo: 1, 2, 3, 4, 5, 6, 7, 8, 9, 8, 7, 6, 5, 4, 3, 2, 1, (repete)
+    const cycle = (roundNumber - 1) % 17; // Ciclo de 17 rodadas (1-9-1)
+    
+    if (cycle < 9) {
+      return cycle + 1; // 1, 2, 3, ..., 9
     } else {
-      return 19 - roundNumber; // 8, 7, 6, ..., 1
+      return 17 - cycle; // 8, 7, 6, ..., 1
     }
   }
 

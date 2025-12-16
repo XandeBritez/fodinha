@@ -32,11 +32,14 @@
 
 .card.playable {
   cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, z-index 0s;
 }
 
-.card.playable:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+.card.playable:hover,
+.card.playable.touched {
+  transform: translateY(-20px) scale(1.05) !important;
+  box-shadow: 0 15px 30px rgba(255, 215, 0, 0.5) !important;
+  z-index: 100 !important;
 }
 
 .card.manilha {

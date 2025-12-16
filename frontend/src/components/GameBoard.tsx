@@ -6,15 +6,13 @@ import { PlayerInfo } from './PlayerInfo';
 import { GameLog } from './GameLog';
 import './GameBoard.css';
 
-const TURN_TIME_LIMIT = 45000; // 45 segundos
-
 interface GameBoardProps {
   room: Room;
   myPlayerId: string;
   onPlayCard: (cardId: string) => void;
   onMakePrediction: (prediction: number) => void;
   onRestartGame: () => void;
-  turnTimerStart?: { playerId: string; timeLimit: number } | null;
+  turnTimerStart?: { playerId: string; timeLimit: number; type?: string } | null;
 }
 
 export function GameBoard({ room, myPlayerId, onPlayCard, onMakePrediction, onRestartGame, turnTimerStart }: GameBoardProps) {
@@ -25,14 +23,14 @@ export function GameBoard({ room, myPlayerId, onPlayCard, onMakePrediction, onRe
   const [trickWinnerName, setTrickWinnerName] = useState<string | null>(null);
   const [showPlayersSheet, setShowPlayersSheet] = useState(false);
   const [showHistorySheet, setShowHistorySheet] = useState(false);
-  const [turnTimeRemaining, setTurnTimeRemaining] = useState<number>(TURN_TIME_LIMIT);
+  const [turnTimeRemaining, setTurnTimeRemaining] = useState<number>(15000);
   const [showTurnTimer, setShowTurnTimer] = useState(false);
   const timerIntervalRef = useRef<number | null>(null);
   const timerStartRef = useRef<number>(0);
 
-  // Timer de turno
+  // Timer de turno (jogada e previsão)
   useEffect(() => {
-    if (turnTimerStart && gameState?.phase === 'playing') {
+    if (turnTimerStart && (gameState?.phase === 'playing' || gameState?.phase === 'prediction')) {
       // Iniciar timer
       timerStartRef.current = Date.now();
       setTurnTimeRemaining(turnTimerStart.timeLimit);
@@ -70,9 +68,9 @@ export function GameBoard({ room, myPlayerId, onPlayCard, onMakePrediction, onRe
     }
   }, [turnTimerStart, gameState?.phase]);
 
-  // Esconder timer quando não é fase de jogo
+  // Esconder timer quando não é fase de jogo ou previsão
   useEffect(() => {
-    if (gameState?.phase !== 'playing') {
+    if (gameState?.phase !== 'playing' && gameState?.phase !== 'prediction') {
       setShowTurnTimer(false);
       if (timerIntervalRef.current) {
         clearInterval(timerIntervalRef.current);
@@ -123,9 +121,15 @@ export function GameBoard({ room, myPlayerId, onPlayCard, onMakePrediction, onRe
         setCountdown(3);
         const interval = setInterval(() => {
           setCountdown(prev => {
-            if (prev === null || prev <= 1) {
+            if (prev === null) {
               clearInterval(interval);
               return null;
+            }
+            if (prev <= 1) {
+              clearInterval(interval);
+              // Aguardar 1 segundo antes de limpar para mostrar o "1"
+              setTimeout(() => setCountdown(null), 1000);
+              return 1;
             }
             return prev - 1;
           });
@@ -238,6 +242,35 @@ export function GameBoard({ room, myPlayerId, onPlayCard, onMakePrediction, onRe
 
       {/* Mesa de jogo */}
       <div className="game-table">
+        {/* Previsões - Mobile Only - Aparece após primeira previsão */}
+        {(gameState.phase === 'prediction' || gameState.phase === 'playing') && Object.keys(gameState.predictions).length > 0 && (
+          <div className="predictions-mobile">
+            <div className="predictions-grid">
+              {activePlayers.map((player) => {
+                const prediction = gameState.predictions[player.id];
+                const tricksWon = gameState.roundsWonThisRound[player.id] ?? 0;
+                const isCurrentPlayer = currentPlayer?.id === player.id;
+                const hasPrediction = prediction !== undefined;
+                
+                return (
+                  <div 
+                    key={player.id} 
+                    className={`prediction-item ${isCurrentPlayer ? 'current' : ''} ${player.id === myPlayerId ? 'me' : ''} ${!hasPrediction ? 'waiting' : ''}`}
+                  >
+                    <span className="player-name-short">{player.name}</span>
+                    <span className="prediction-value">
+                      {gameState.phase === 'playing' 
+                        ? `${tricksWon}/${hasPrediction ? prediction : '?'}`
+                        : hasPrediction ? prediction : '?'
+                      }
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Centro da mesa */}
         <div className="game-center">
           {/* Manilha */}
@@ -273,6 +306,26 @@ export function GameBoard({ room, myPlayerId, onPlayCard, onMakePrediction, onRe
         (gameState.phase === 'finished')
       ) && (
         <div className="action-area">
+          {/* Timer de Previsão */}
+          {showTurnTimer && gameState.phase === 'prediction' && isMyTurnToPredict && (
+            <div className={`prediction-timer ${turnTimeRemaining <= 6000 ? 'urgent' : ''}`}>
+              <div 
+                className="turn-timer-bar"
+                style={{
+                  width: `${(turnTimeRemaining / (turnTimerStart?.timeLimit || 20000)) * 100}%`,
+                  backgroundColor: turnTimeRemaining > (turnTimerStart?.timeLimit || 20000) * 0.6
+                    ? '#4caf50' // Verde (> 60%)
+                    : turnTimeRemaining > (turnTimerStart?.timeLimit || 20000) * 0.3
+                      ? '#ff9800' // Amarelo (30-60%)
+                      : '#f44336' // Vermelho (< 30%)
+                }}
+              />
+              <span className="turn-timer-text">
+                {Math.ceil(turnTimeRemaining / 1000)}s
+              </span>
+            </div>
+          )}
+
           {/* Fase de Previsão - Minha vez */}
           {gameState.phase === 'prediction' && me && !hasMadePrediction && isMyTurnToPredict && (
           <div className="prediction-panel">
@@ -448,12 +501,12 @@ export function GameBoard({ room, myPlayerId, onPlayCard, onMakePrediction, onRe
               <div 
                 className="turn-timer-bar"
                 style={{
-                  width: `${(turnTimeRemaining / TURN_TIME_LIMIT) * 100}%`,
-                  backgroundColor: turnTimeRemaining > 30000 
-                    ? '#4caf50' // Verde (> 30s)
-                    : turnTimeRemaining > 15000 
-                      ? '#ff9800' // Amarelo (15-30s)
-                      : '#f44336' // Vermelho (< 15s)
+                  width: `${(turnTimeRemaining / (turnTimerStart?.timeLimit || 15000)) * 100}%`,
+                  backgroundColor: turnTimeRemaining > (turnTimerStart?.timeLimit || 15000) * 0.6
+                    ? '#4caf50' // Verde (> 60%)
+                    : turnTimeRemaining > (turnTimerStart?.timeLimit || 15000) * 0.3
+                      ? '#ff9800' // Amarelo (30-60%)
+                      : '#f44336' // Vermelho (< 30%)
                 }}
               />
               <span className="turn-timer-text">

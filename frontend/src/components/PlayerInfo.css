@@ -44,9 +44,10 @@
 }
 
 .player-lives {
-  font-size: 1.2rem;
+  font-size: 1rem;
   margin: 5px 0;
   min-height: 25px;
+  color: white;
 }
 
 .player-prediction {

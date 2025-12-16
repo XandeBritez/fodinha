@@ -16,8 +16,8 @@ export function PlayerInfo({ player, isCurrentTurn, isYou }: PlayerInfoProps) {
       </div>
       
       <div className="player-lives">
-        {'❤️'.repeat(player.lives)}
-        {player.lives === 0 && '💀'}
+        ❤️ Vidas: {player.lives}/10
+        {player.lives === 0 && ' 💀'}
       </div>
       
       {player.prediction !== null && (

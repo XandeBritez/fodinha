@@ -108,7 +108,7 @@
 /* Centro da mesa - onde ficam as cartas jogadas */
 .game-center {
   position: absolute;
-  top: 50%;
+  top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
   display: flex;
@@ -304,15 +304,21 @@
 
 .cards-hand .card,
 .cards-hand .card-back {
-  transition: all 0.3s ease;
-  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, z-index 0s;
 }
 
-.cards-hand .card.playable:hover,
-.cards-hand > div:hover .card-back {
-  transform: translateY(-20px) scale(1.1);
+.cards-hand > div {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cards-hand > div:hover {
+  transform: translateY(-20px) scale(1.05);
   z-index: 100;
-  box-shadow: 0 10px 30px rgba(255, 215, 0, 0.5);
+}
+
+.cards-hand > div:hover .card-back {
+  box-shadow: 0 15px 30px rgba(255, 215, 0, 0.5);
 }
 
 .cards-hand .card:not(.playable) {
@@ -321,7 +327,8 @@
 }
 
 .cards-hand .card:not(.playable):hover {
-  transform: none;
+  transform: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
 }
 
 .waiting-panel, .scoring-panel {
@@ -904,18 +911,18 @@
     right: 0;
     top: auto;
     transform: none;
-    padding: 20px 15px;
-    padding-bottom: calc(25px + env(safe-area-inset-bottom, 0px));
+    padding: 15px 12px;
+    padding-bottom: calc(15px + env(safe-area-inset-bottom, 0px));
     margin: 0;
     min-width: 95%;
     max-width: 95%;
     width: 100%;
-    border-radius: 20px;
+    border-radius: 15px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
-    max-height: 45vh;
+    max-height: 60vh;
     overflow-y: auto;
   }
 
@@ -927,7 +934,47 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+  }
+
+  .action-area .prediction-panel h3 {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+  }
+
+  .action-area .prediction-panel p {
+    font-size: 0.85rem;
+    margin: 5px 0;
+  }
+
+  .action-area .predictions-sum {
+    font-size: 0.9rem;
+    margin: 8px 0;
+  }
+
+  .action-area .prediction-buttons {
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .action-area .prediction-buttons button {
+    width: 42px;
+    height: 42px;
+    font-size: 1rem;
+    border-radius: 8px;
+  }
+
+  .action-area .preview-cards {
+    margin: 8px 0;
+  }
+
+  .action-area .preview-cards .cards-hand {
+    gap: 5px;
+  }
+
+  .action-area .preview-cards .card {
+    width: 45px !important;
+    height: 65px !important;
   }
 
   /* Ajustar cards-footer para mobile */
@@ -949,7 +996,7 @@
 
   .cards-hand .card,
   .cards-hand > div {
-    margin-left: -40px;
+    margin-left: -25px;
     transition: all 0.3s ease;
   }
 
@@ -958,32 +1005,26 @@
     margin-left: 0;
   }
 
-  /* Carta levanta levemente ao passar por cima */
+  /* Carta levanta ao tocar/hover */
   .cards-hand .card,
+  .cards-hand > div,
   .cards-hand > div .card-back {
-    transition: transform 0.2s ease, z-index 0s;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
 
   .cards-hand .card.playable:hover,
-  .cards-hand > div:hover .card-back {
-    transform: translateY(-40px) scale(1.2);
-    z-index: 100;
-    box-shadow: 0 15px 40px rgba(255, 215, 0, 0.6);
-  }
-
-  /* Cartas adjacentes também levantam um pouco (efeito cascata) */
-  .cards-hand .card.playable:hover + .card,
-  .cards-hand .card.playable:hover + div,
-  .cards-hand > div:hover + .card,
-  .cards-hand > div:hover + div {
-    transform: translateY(-15px);
-    z-index: 50;
-  }
-
-  /* Efeito de toque/hover mais responsivo */
   .cards-hand .card.playable:active,
+  .cards-hand > div:hover,
+  .cards-hand > div:active {
+    transform: translateY(-20px) scale(1.05) !important;
+    z-index: 100 !important;
+  }
+
+  .cards-hand .card.playable:hover,
+  .cards-hand .card.playable:active,
+  .cards-hand > div:hover .card-back,
   .cards-hand > div:active .card-back {
-    transform: translateY(-45px) scale(1.25);
+    box-shadow: 0 15px 25px rgba(255, 215, 0, 0.5) !important;
   }
 
   /* Ajustar tamanho das cartas no mobile */
@@ -1053,5 +1094,134 @@
 
   .turn-timer-text {
     font-size: 0.7rem;
+  }
+}
+
+
+/* Predictions Mobile - OCULTO POR PADRÃO */
+.predictions-mobile {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .predictions-mobile {
+    display: block !important;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.85);
+    border-radius: 15px;
+    padding: 12px;
+    border: 2px solid rgba(255, 215, 0, 0.4);
+    z-index: 5;
+  }
+
+  .predictions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .prediction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: rgba(30, 122, 62, 0.6);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    transition: all 0.3s ease;
+  }
+
+  .prediction-item.current {
+    background: rgba(255, 215, 0, 0.3);
+    border-color: #ffd700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  }
+
+  .prediction-item.me {
+    border: 2px solid #4caf50;
+    background: rgba(76, 175, 80, 0.3);
+  }
+
+  .prediction-item.waiting {
+    opacity: 0.5;
+    background: rgba(100, 100, 100, 0.3);
+  }
+
+  .player-name-short {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
+  }
+
+  .prediction-value {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #ffd700;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    min-width: 40px;
+    text-align: right;
+  }
+
+  /* Ajustar game-center para não sobrepor */
+  .game-center {
+    margin-top: 120px;
+  }
+}
+
+
+/* Timer de Previsão - dentro da action-area */
+.prediction-timer {
+  position: relative !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100%;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  border: 2px solid rgba(255, 215, 0, 0.4);
+  margin-bottom: 15px;
+}
+
+.prediction-timer .turn-timer-bar {
+  height: 100%;
+  transition: width 0.1s linear, background-color 0.3s ease;
+  border-radius: 10px;
+}
+
+.prediction-timer .turn-timer-text {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  z-index: 1;
+}
+
+.prediction-timer.urgent {
+  animation: timerPulse 0.5s ease-in-out infinite;
+  border-color: #f44336;
+}
+
+@media (max-width: 768px) {
+  .prediction-timer {
+    height: 22px;
+    margin-bottom: 12px;
+  }
+
+  .prediction-timer .turn-timer-text {
+    font-size: 0.8rem;
   }
 }
